@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterProxy</title>
+    <script src="/sail/baremux/index.js"></script>
+    <script src="/sail/scram/scramjet.all.js"></script>
+    <script>
+        navigator.serviceWorker.register("/sail/sw.js")
+    </script>
+</head>
+<body>
+    <style>
+        body{
+              background: linear-gradient(100deg, #066b99 20%, #00113d 100%);
+        }
+        iframe {
+            height: 95vh;
+            width: 100vw;
+            background: #000000;
+            position: absolute;
+            left:0;
+            bottom: 0;
+        }
+        #bar {
+            position: left;
+}
+    </style>
+
+    <input type="text" placeholder="url" id="bar">
+    <iframe src="" frameborder="0" id="frame"></iframe>
+
+    <script>
+        const connection = new BareMux.BareMuxConnection("/sail/baremux/worker.js") // you could always use epoxy, but libcurl is better imo
+        connection.setTransport("/sail/libcurl/index.mjs", [{ websocket: "wss://wisp.mercurywork.shop/" }]) // use some other wisp here
+
+        const frame = document.getElementById("frame")
+        const bar = document.getElementById("bar")
+
+        const { ScramjetController } = $scramjetLoadController()
+        const scramjet = new ScramjetController({
+            files: {
+                all: "/sail/scram/scramjet.all.js",
+                wasm: "/sail/scram/scramjet.wasm.wasm",
+                sync: "/sail/scram/scramjet.sync.js"
+            },
+            prefix: "/sail/go/" // feel free to change this later
+        })
+        scramjet.init()
+
+        function nav() {
+            let url = bar.value.trim()
+            if (!url) return;
+
+            if (!url.includes(".")) {
+                url = "https://search.brave.com/search?q=" + encodeURIComponent(url)
+            } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                url = "https://" + url
+            }
+
+            frame.src = scramjet.encodeUrl(url)
+        }
+
+        bar.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                nav()
+            }
+        })
+    </script>  
+    
+</body>
+</html>
